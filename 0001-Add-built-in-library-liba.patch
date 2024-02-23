@@ -1,0 +1,156 @@
+From a6aadb8d4ef188006f90a689d162a01c3007d6e5 Mon Sep 17 00:00:00 2001
+From: tqfx <tqfx@tqfx.org>
+Date: Sun, 31 Dec 2023 16:48:22 +0800
+Subject: [PATCH] Add built-in library liba 0.1.1
+
+---
+ .gitignore          |  2 ++
+ .gitmodules         |  3 +++
+ CMakeLists.txt      |  8 ++++++++
+ Makefile            |  8 ++++++--
+ VM/include/lualib.h |  2 ++
+ VM/lua.h            | 15 +++++++++++++++
+ VM/src/linit.cpp    |  1 +
+ liba                |  1 +
+ 8 files changed, 38 insertions(+), 2 deletions(-)
+ create mode 100644 .gitmodules
+ create mode 100644 VM/lua.h
+ create mode 160000 liba
+
+diff --git a/.gitignore b/.gitignore
+index 528ab20..dc723e5 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,3 +1,4 @@
++.cache/
+ /build/
+ /build[.-]*/
+ /coverage/
+@@ -10,5 +11,6 @@
+ /luau
+ /luau-tests
+ /luau-analyze
++/luau-bytecode
+ /luau-compile
+ __pycache__
+diff --git a/.gitmodules b/.gitmodules
+new file mode 100644
+index 0000000..5ef9a28
+--- /dev/null
++++ b/.gitmodules
+@@ -0,0 +1,3 @@
++[submodule "liba"]
++	path = liba
++	url = https://github.com/tqfx/liba.git
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 0189fcd..86d9b87 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -271,3 +271,11 @@ foreach(LIB Luau.Ast Luau.Compiler Luau.Config Luau.Analysis Luau.CodeGen Luau.V
+         endif()
+     endif()
+ endforeach()
++
++add_subdirectory(liba)
++file(GLOB_RECURSE ALUA_SOURCES liba/lua/src/*.[ch])
++set_property(SOURCE ${ALUA_SOURCES} PROPERTY
++    INCLUDE_DIRECTORIES ${CMAKE_CURRENT_LIST_DIR}/VM
++)
++target_sources(Luau.VM PRIVATE ${ALUA_SOURCES})
++target_link_libraries(Luau.VM PRIVATE alib)
+diff --git a/Makefile b/Makefile
+index 0f7c192..967a752 100644
+--- a/Makefile
++++ b/Makefile
+@@ -61,6 +61,9 @@ BYTECODE_CLI_TARGET=$(BUILD)/luau-bytecode
+ FUZZ_SOURCES=$(wildcard fuzz/*.cpp) fuzz/luau.pb.cpp
+ FUZZ_OBJECTS=$(FUZZ_SOURCES:%=$(BUILD)/%.o)
+ 
++LIBA_SOURCES=$(wildcard liba/src/*.c liba/lua/src/*.c)
++LIBA_OBJECTS=$(LIBA_SOURCES:%=$(BUILD)/%.o)
++
+ TESTS_ARGS=
+ ifneq ($(flags),)
+ 	TESTS_ARGS+=--fflags=$(flags)
+@@ -73,7 +76,7 @@ OBJECTS=$(AST_OBJECTS) $(COMPILER_OBJECTS) $(CONFIG_OBJECTS) $(ANALYSIS_OBJECTS)
+ EXECUTABLE_ALIASES = luau luau-analyze luau-compile luau-bytecode luau-tests
+ 
+ # common flags
+-CXXFLAGS=-g -Wall
++CXXFLAGS=-DLUA_API=extern\"C\" -DLUA_USE_LONGJMP=1 -g -Wall
+ LDFLAGS=
+ 
+ # some gcc versions treat var in `if (type var = val)` as unused
+@@ -148,6 +151,7 @@ $(ANALYZE_CLI_OBJECTS): CXXFLAGS+=-std=c++17 -ICommon/include -IAst/include -IAn
+ $(COMPILE_CLI_OBJECTS): CXXFLAGS+=-std=c++17 -ICommon/include -IAst/include -ICompiler/include -IVM/include -ICodeGen/include
+ $(BYTECODE_CLI_OBJECTS): CXXFLAGS+=-std=c++17 -ICommon/include -IAst/include -ICompiler/include -IVM/include -ICodeGen/include
+ $(FUZZ_OBJECTS): CXXFLAGS+=-std=c++17 -ICommon/include -IAst/include -ICompiler/include -IAnalysis/include -IVM/include -ICodeGen/include -IConfig/include
++$(LIBA_OBJECTS): CXXFLAGS+=-std=c11 -IVM -Iliba/include
+ 
+ $(TESTS_TARGET): LDFLAGS+=-lpthread
+ $(REPL_CLI_TARGET): LDFLAGS+=-lpthread
+@@ -240,7 +244,7 @@ $(COMPILER_TARGET): $(COMPILER_OBJECTS)
+ $(CONFIG_TARGET): $(CONFIG_OBJECTS)
+ $(ANALYSIS_TARGET): $(ANALYSIS_OBJECTS)
+ $(CODEGEN_TARGET): $(CODEGEN_OBJECTS)
+-$(VM_TARGET): $(VM_OBJECTS)
++$(VM_TARGET): $(VM_OBJECTS) $(LIBA_OBJECTS)
+ $(ISOCLINE_TARGET): $(ISOCLINE_OBJECTS)
+ 
+ $(AST_TARGET) $(COMPILER_TARGET) $(CONFIG_TARGET) $(ANALYSIS_TARGET) $(CODEGEN_TARGET) $(VM_TARGET) $(ISOCLINE_TARGET):
+diff --git a/VM/include/lualib.h b/VM/include/lualib.h
+index 367a028..d18e557 100644
+--- a/VM/include/lualib.h
++++ b/VM/include/lualib.h
+@@ -136,6 +136,8 @@ LUALIB_API int luaopen_math(lua_State* L);
+ #define LUA_DBLIBNAME "debug"
+ LUALIB_API int luaopen_debug(lua_State* L);
+ 
++LUALIB_API int luaopen_liba(lua_State* L);
++
+ // open all builtin libraries
+ LUALIB_API void luaL_openlibs(lua_State* L);
+ 
+diff --git a/VM/lua.h b/VM/lua.h
+new file mode 100644
+index 0000000..b4f4423
+--- /dev/null
++++ b/VM/lua.h
+@@ -0,0 +1,15 @@
++#undef LUA_API
++#if defined(__cplusplus)
++#define LUA_API extern "C"
++#else /* !__cplusplus */
++#define LUA_API extern
++#endif /* __cplusplus */
++#include "include/lua.h"
++
++#undef lua_pushcfunction
++#define lua_pushcfunction(L, f) lua_pushcclosurek(L, f, NULL, 0, NULL)
++
++#undef lua_pushcclosure
++#define lua_pushcclosure(L, f, n) lua_pushcclosurek(L, f, NULL, n, NULL)
++
++#define luaL_error luaL_errorL
+diff --git a/VM/src/linit.cpp b/VM/src/linit.cpp
+index aad6513..ebba757 100644
+--- a/VM/src/linit.cpp
++++ b/VM/src/linit.cpp
+@@ -15,6 +15,7 @@ static const luaL_Reg lualibs[] = {
+     {LUA_UTF8LIBNAME, luaopen_utf8},
+     {LUA_BITLIBNAME, luaopen_bit32},
+     {LUA_BUFFERLIBNAME, luaopen_buffer},
++    {"liba", luaopen_liba},
+     {NULL, NULL},
+ };
+ 
+diff --git a/liba b/liba
+new file mode 160000
+index 0000000..541e485
+--- /dev/null
++++ b/liba
+@@ -0,0 +1 @@
++Subproject commit 541e485530736f3a512830ed1a6bb0b8f76b4522
+-- 
+2.43.2
+
