@@ -1,21 +1,8 @@
-From 8807374d9b669450bb09968e9798b6e7732e475f Mon Sep 17 00:00:00 2001
+From fefea8f0947c1f970da911eb31e6bb8c2fcff0eb Mon Sep 17 00:00:00 2001
 From: tqfx <tqfx@tqfx.org>
 Date: Sun, 31 Dec 2023 16:48:22 +0800
-Subject: [PATCH] Add built-in library liba 0.1.5
+Subject: [PATCH] Add built-in library liba 0.1.6
 
----
- .gitignore          |  2 ++
- .gitmodules         |  3 +++
- CMakeLists.txt      |  8 ++++++++
- Makefile            |  8 ++++++--
- VM/include/lualib.h |  2 ++
- VM/lua.h            | 15 +++++++++++++++
- VM/src/linit.cpp    |  1 +
- liba                |  1 +
- 8 files changed, 38 insertions(+), 2 deletions(-)
- create mode 100644 .gitmodules
- create mode 100644 VM/lua.h
- create mode 160000 liba
 
 diff --git a/.gitignore b/.gitignore
 index 528ab20..dc723e5 100644
@@ -146,11 +133,11 @@ index aad6513..ebba757 100644
  
 diff --git a/liba b/liba
 new file mode 160000
-index 0000000..dd0f4d9
+index 0000000..355931d
 --- /dev/null
 +++ b/liba
 @@ -0,0 +1 @@
-+Subproject commit dd0f4d9fa5ca4400ed0dee22eedf43c19296a633
++Subproject commit 355931d136ba1f92c68ce65f0c79f0765e4f706b
 -- 
-2.43.2
+2.44.0
 
