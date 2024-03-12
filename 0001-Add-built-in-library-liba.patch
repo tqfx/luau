@@ -1,7 +1,7 @@
-From fefea8f0947c1f970da911eb31e6bb8c2fcff0eb Mon Sep 17 00:00:00 2001
+From 2baeb135049f9d963d0eaf15d052a9bea039e460 Mon Sep 17 00:00:00 2001
 From: tqfx <tqfx@tqfx.org>
 Date: Sun, 31 Dec 2023 16:48:22 +0800
-Subject: [PATCH] Add built-in library liba 0.1.6
+Subject: [PATCH] Add built-in library liba 0.1.7
 
 
 diff --git a/.gitignore b/.gitignore
@@ -133,11 +133,11 @@ index aad6513..ebba757 100644
  
 diff --git a/liba b/liba
 new file mode 160000
-index 0000000..355931d
+index 0000000..656f0d9
 --- /dev/null
 +++ b/liba
 @@ -0,0 +1 @@
-+Subproject commit 355931d136ba1f92c68ce65f0c79f0765e4f706b
++Subproject commit 656f0d9265d6f2a1d298b6fa511b1f3281f7a885
 -- 
 2.44.0
 
