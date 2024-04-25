@@ -1,7 +1,7 @@
-From da407248b6087981872d175f0fa26346dc726ee5 Mon Sep 17 00:00:00 2001
+From 7ac17ccf0565e9743e3b0b984dd99b3794b1da3d Mon Sep 17 00:00:00 2001
 From: tqfx <tqfx@tqfx.org>
 Date: Sun, 31 Dec 2023 16:48:22 +0800
-Subject: [PATCH] Add built-in library liba 0.1.10
+Subject: [PATCH] Add built-in library liba 0.1.11
 
 
 diff --git a/.gitignore b/.gitignore
@@ -30,10 +30,10 @@ index 0000000..5ef9a28
 +	path = liba
 +	url = https://github.com/tqfx/liba.git
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 0189fcd..86d9b87 100644
+index 985cda1..bc080e8 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -271,3 +271,11 @@ foreach(LIB Luau.Ast Luau.Compiler Luau.Config Luau.Analysis Luau.CodeGen Luau.V
+@@ -276,3 +276,11 @@ foreach(LIB Luau.Ast Luau.Compiler Luau.Config Luau.Analysis Luau.CodeGen Luau.V
          endif()
      endif()
  endforeach()
@@ -133,11 +133,11 @@ index aad6513..ebba757 100644
  
 diff --git a/liba b/liba
 new file mode 160000
-index 0000000..3ff3cfb
+index 0000000..d06f37e
 --- /dev/null
 +++ b/liba
 @@ -0,0 +1 @@
-+Subproject commit 3ff3cfb8c7f477352c68ce00ba1f16521ccd4eed
++Subproject commit d06f37edaf51f533cb2ac1e6eddb4dfb2485598c
 -- 
 2.44.0
 
